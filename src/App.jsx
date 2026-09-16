@@ -71,7 +71,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>仕込みノート</h1>
+        <h1>株、いい値</h1>
         <p className="app-subtitle">気になる株の「仕込みたい値段」を登録して、値下がりを見逃さない</p>
       </header>
 

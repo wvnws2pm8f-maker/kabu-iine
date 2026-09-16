@@ -14,8 +14,8 @@ export default defineConfig({
       injectRegister: false,
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
-        name: '仕込みノート',
-        short_name: '仕込みノート',
+        name: '株、いい値',
+        short_name: '株、いい値',
         description: '気になる株が値下がりしたタイミングを見逃さないための、NISA中心の長期投資向けウォッチリストアプリ',
         start_url: './',
         scope: './',

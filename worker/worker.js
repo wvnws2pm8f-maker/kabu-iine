@@ -1,4 +1,4 @@
-// 仕込みノート 株価プロキシ用 Cloudflare Worker
+// 株、いい値 株価プロキシ用 Cloudflare Worker
 //
 // フロントエンド(GitHub Pages上の静的サイト)から複数の銘柄シンボルを受け取り、
 // Yahoo Financeの非公式チャートAPI(query1.finance.yahoo.com/v8/finance/chart/{symbol})を

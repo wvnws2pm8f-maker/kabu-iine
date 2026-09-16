@@ -2,7 +2,7 @@
 // この端末のIndexedDBだけに保存する(他端末とは同期しない)。
 import { openDB } from 'idb'
 
-const DB_NAME = 'shikomi-note'
+const DB_NAME = 'kabu-iine'
 const DB_VERSION = 1
 const STORE = 'watchlist'
 

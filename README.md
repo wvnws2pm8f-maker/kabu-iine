@@ -1,4 +1,4 @@
-# 仕込みノート（Phase 1）
+# 株、いい値（Phase 1）
 
 NISA枠を中心に長中期で株を保有している人向けの、
 「気になる株が値下がりしたタイミングを見逃さない」ためのウォッチリストPWAアプリです。
@@ -41,7 +41,7 @@ Cloudflareのダッシュボード(ブラウザ)だけで設定できます。�
 
 1. [Cloudflare](https://dash.cloudflare.com/)にログイン（アカウントが無ければ無料登録）
 2. 「Workers & Pages」→「Create」→「Create Worker」
-3. 適当な名前(例: `shikomi-note-quote`)で作成し、エディタ画面が開いたら`worker/worker.js`の中身を全部貼り付けて「Deploy」
+3. 適当な名前(例: `kabu-iine-quote`)で作成し、エディタ画面が開いたら`worker/worker.js`の中身を全部貼り付けて「Deploy」
 4. Settings → Variables and Secrets で `APP_SECRET`（合言葉、好きな文字列でOK）を追加
 5. デプロイ後に表示されるWorkerのURL（`https://xxxxx.workers.dev`）を控える
 
