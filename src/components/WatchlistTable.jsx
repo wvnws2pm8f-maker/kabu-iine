@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import PriceChart from './PriceChart.jsx'
 
 function formatPrice(price, currency) {
   if (typeof price !== 'number') return '-'
@@ -22,15 +23,13 @@ function ChangeBadge({ price, previousClose }) {
   )
 }
 
-function TargetPriceEditor({ item, onUpdateTarget }) {
+function TargetPriceEditor({ item, onUpdate }) {
   const [value, setValue] = useState(item.targetPrice ?? '')
-  const [editing, setEditing] = useState(false)
 
   const commit = () => {
-    setEditing(false)
     const num = value === '' ? null : Number(value)
     if (num !== item.targetPrice) {
-      onUpdateTarget(item.id, num)
+      onUpdate(item.id, { targetPrice: num })
     }
   }
 
@@ -40,7 +39,6 @@ function TargetPriceEditor({ item, onUpdateTarget }) {
       type="number"
       step="0.01"
       value={value}
-      onFocus={() => setEditing(true)}
       onChange={(e) => setValue(e.target.value)}
       onBlur={commit}
       placeholder="未設定"
@@ -48,7 +46,29 @@ function TargetPriceEditor({ item, onUpdateTarget }) {
   )
 }
 
-export default function WatchlistTable({ items, quotes, onDelete, onUpdateTarget }) {
+function MemoEditor({ item, onUpdate }) {
+  const [value, setValue] = useState(item.memo ?? '')
+
+  const commit = () => {
+    const trimmed = value.trim()
+    if (trimmed !== (item.memo ?? '')) {
+      onUpdate(item.id, { memo: trimmed })
+    }
+  }
+
+  return (
+    <input
+      className="memo-input"
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={commit}
+      placeholder="任意（気になる理由など）"
+    />
+  )
+}
+
+export default function WatchlistTable({ items, quotes, onDelete, onUpdate }) {
   return (
     <div className="watchlist">
       {items.map((item) => {
@@ -66,7 +86,10 @@ export default function WatchlistTable({ items, quotes, onDelete, onUpdateTarget
                 <span className="watch-code">{item.code}</span>
                 {isShikomi && <span className="shikomi-tag">🎯 仕込みチャンス</span>}
               </div>
-              {item.memo && <p className="watch-memo">{item.memo}</p>}
+              <div className="watch-memo-row">
+                <label className="memo-field-label">メモ</label>
+                <MemoEditor item={item} onUpdate={onUpdate} />
+              </div>
             </div>
 
             <div className="watch-card-price">
@@ -89,12 +112,22 @@ export default function WatchlistTable({ items, quotes, onDelete, onUpdateTarget
 
             <div className="watch-card-target">
               <label>仕込み値</label>
-              <TargetPriceEditor item={item} onUpdateTarget={onUpdateTarget} />
+              <TargetPriceEditor item={item} onUpdate={onUpdate} />
             </div>
 
             <button className="delete-button" onClick={() => onDelete(item.id)} aria-label="削除">
               ✕
             </button>
+
+            <div className="watch-card-chart">
+              {quote?.history ? (
+                <PriceChart history={quote.history} currency={quote.currency} />
+              ) : (
+                <div className="price-chart-empty">
+                  {quote?.error ? 'グラフを表示できません' : 'グラフを読み込み中…'}
+                </div>
+              )}
+            </div>
           </div>
         )
       })}

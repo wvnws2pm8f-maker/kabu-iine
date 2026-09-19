@@ -63,7 +63,10 @@ export default {
 }
 
 async function fetchOneQuote(symbol) {
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=5d&interval=1d`
+  // range=3mo: 変動グラフ表示用に約3ヶ月分の日次終値も一緒に取得する。
+  // 現在値と履歴を別々のリクエストにすると呼び出し回数が倍になるため、
+  // 1回のリクエストで両方まかなう(このAPIはrangeを広げても現在値=meta部分は変わらない)。
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=3mo&interval=1d`
   try {
     const res = await fetch(yahooUrl, {
       headers: {
@@ -86,13 +89,26 @@ async function fetchOneQuote(symbol) {
     if (typeof price !== 'number') {
       return { error: '価格データを取得できませんでした' }
     }
+
+    // 変動グラフ用の履歴データ。休場日などclose値がnullの日は除外する。
+    const timestamps = result.timestamp || []
+    const closes = result.indicators?.quote?.[0]?.close || []
+    const history = []
+    for (let i = 0; i < timestamps.length; i++) {
+      const c = closes[i]
+      if (typeof c === 'number') {
+        history.push({ t: timestamps[i], c: Math.round(c * 100) / 100 })
+      }
+    }
+
     return {
       price,
       previousClose: typeof previousClose === 'number' ? previousClose : null,
       currency: meta.currency || null,
       name: meta.shortName || meta.longName || symbol,
       exchange: meta.exchangeName || null,
-      marketTime: meta.regularMarketTime || null
+      marketTime: meta.regularMarketTime || null,
+      history
     }
   } catch (err) {
     return { error: err && err.message ? err.message : String(err) }

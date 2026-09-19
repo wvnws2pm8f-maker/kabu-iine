@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { listWatchItems, addWatchItem, updateWatchItem, deleteWatchItem } from './utils/db.js'
 import { fetchQuotes } from './utils/quote.js'
 import AddItemForm from './components/AddItemForm.jsx'
 import WatchlistTable from './components/WatchlistTable.jsx'
+
+const MARKET_LABEL = { JP: '日本株', US: '米国株' }
 
 export default function App() {
   const [items, setItems] = useState([])
@@ -11,6 +13,7 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
+  const [activeMarket, setActiveMarket] = useState('JP')
 
   const refreshQuotes = useCallback(async (currentItems) => {
     if (currentItems.length === 0) {
@@ -56,8 +59,10 @@ export default function App() {
     })
   }
 
-  const handleUpdateTarget = async (id, targetPrice) => {
-    const updated = await updateWatchItem(id, { targetPrice })
+  // 仕込み値・メモどちらの編集もこの1つの関数でまとめて扱う
+  // (WatchlistTable側はpatchオブジェクトを渡すだけでよい)
+  const handleUpdateItem = async (id, patch) => {
+    const updated = await updateWatchItem(id, patch)
     if (updated) {
       setItems((prev) => prev.map((i) => (i.id === id ? updated : i)))
     }
@@ -67,6 +72,26 @@ export default function App() {
     const q = quotes[item.id]
     return q && !q.error && Number(item.targetPrice) > 0 && q.price <= Number(item.targetPrice)
   }).length
+
+  const marketCounts = useMemo(() => {
+    const counts = { JP: 0, US: 0 }
+    for (const item of items) {
+      if (counts[item.market] != null) counts[item.market] += 1
+    }
+    return counts
+  }, [items])
+
+  const marketHasShikomi = useMemo(() => {
+    const flags = { JP: false, US: false }
+    for (const item of items) {
+      const q = quotes[item.id]
+      const isShikomi = q && !q.error && Number(item.targetPrice) > 0 && q.price <= Number(item.targetPrice)
+      if (isShikomi) flags[item.market] = true
+    }
+    return flags
+  }, [items, quotes])
+
+  const filteredItems = items.filter((item) => item.market === activeMarket)
 
   return (
     <div className="app">
@@ -90,18 +115,33 @@ export default function App() {
         )}
       </div>
 
+      <div className="market-tabs">
+        {['JP', 'US'].map((market) => (
+          <button
+            key={market}
+            className={`market-tab ${activeMarket === market ? 'active' : ''}`}
+            onClick={() => setActiveMarket(market)}
+          >
+            {MARKET_LABEL[market]}（{marketCounts[market]}）
+            {marketHasShikomi[market] && <span className="market-tab-dot" aria-label="仕込みチャンスあり" />}
+          </button>
+        ))}
+      </div>
+
       {error && <div className="error-banner">{error}</div>}
 
       {loading ? (
         <p className="empty-state">読み込み中…</p>
       ) : items.length === 0 ? (
         <p className="empty-state">まだ銘柄が登録されていません。上のフォームから追加してください。</p>
+      ) : filteredItems.length === 0 ? (
+        <p className="empty-state">{MARKET_LABEL[activeMarket]}の銘柄はまだ登録されていません。</p>
       ) : (
         <WatchlistTable
-          items={items}
+          items={filteredItems}
           quotes={quotes}
           onDelete={handleDelete}
-          onUpdateTarget={handleUpdateTarget}
+          onUpdate={handleUpdateItem}
         />
       )}
     </div>

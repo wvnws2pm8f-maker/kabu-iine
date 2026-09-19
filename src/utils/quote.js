@@ -63,11 +63,26 @@ function mockQuotes(items) {
     const base = Number(item.targetPrice) > 0 ? Number(item.targetPrice) : 1000
     const jitter = 0.85 + Math.random() * 0.3
     const price = Math.round(base * jitter * 10) / 10
+    const previousClose = Math.round(price * (0.98 + Math.random() * 0.04) * 10) / 10
+
+    // グラフ確認用に、直近60日分のランダムウォークの仮履歴も生成する
+    const days = 60
+    const daySeconds = 86400
+    const now = Math.floor(Date.now() / 1000)
+    let walk = price * (0.9 + Math.random() * 0.1)
+    const history = []
+    for (let i = days; i >= 1; i--) {
+      walk = walk * (0.985 + Math.random() * 0.03)
+      history.push({ t: now - i * daySeconds, c: Math.round(walk * 100) / 100 })
+    }
+    history.push({ t: now, c: price })
+
     result[item.id] = {
       price,
-      previousClose: Math.round(price * (0.98 + Math.random() * 0.04) * 10) / 10,
+      previousClose,
       currency: item.market === 'JP' ? 'JPY' : 'USD',
       name: item.name,
+      history,
       mock: true
     }
   }
