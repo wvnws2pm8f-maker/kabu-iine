@@ -85,7 +85,6 @@ async function fetchOneQuote(symbol) {
     }
     const meta = result.meta || {}
     const price = meta.regularMarketPrice
-    const previousClose = meta.previousClose ?? meta.chartPreviousClose
     if (typeof price !== 'number') {
       return { error: '価格データを取得できませんでした' }
     }
@@ -101,9 +100,20 @@ async function fetchOneQuote(symbol) {
       }
     }
 
+    // 前日比の計算には meta.chartPreviousClose を使わない。この値は
+    // 「表示期間(range)の開始日の前営業日終値」を指すため、range=3moに
+    // 広げた影響で「3ヶ月前からの変化率」になってしまうバグがあった
+    // (2026-09-20発覚)。履歴データの末尾から2番目=直近の前営業日終値を使う。
+    const previousClose =
+      history.length >= 2
+        ? history[history.length - 2].c
+        : typeof meta.previousClose === 'number'
+          ? meta.previousClose
+          : null
+
     return {
       price,
-      previousClose: typeof previousClose === 'number' ? previousClose : null,
+      previousClose,
       currency: meta.currency || null,
       name: meta.shortName || meta.longName || symbol,
       exchange: meta.exchangeName || null,
