@@ -68,10 +68,10 @@ function MemoEditor({ item, onUpdate }) {
   )
 }
 
-export default function WatchlistTable({ items, quotes, onDelete, onUpdate }) {
+export default function WatchlistTable({ items, quotes, onDelete, onUpdate, onMove }) {
   return (
     <div className="watchlist">
-      {items.map((item) => {
+      {items.map((item, index) => {
         const quote = quotes[item.id]
         const price = quote?.price
         const isShikomi =
@@ -79,6 +79,25 @@ export default function WatchlistTable({ items, quotes, onDelete, onUpdate }) {
 
         return (
           <div key={item.id} className={`watch-card ${isShikomi ? 'shikomi' : ''}`}>
+            <div className="watch-card-reorder">
+              <button
+                className="reorder-button"
+                onClick={() => onMove(item.id, -1)}
+                disabled={index === 0}
+                aria-label="上へ移動"
+              >
+                ▲
+              </button>
+              <button
+                className="reorder-button"
+                onClick={() => onMove(item.id, 1)}
+                disabled={index === items.length - 1}
+                aria-label="下へ移動"
+              >
+                ▼
+              </button>
+            </div>
+
             <div className="watch-card-main">
               <div className="watch-card-title">
                 <span className={`market-badge ${item.market}`}>{item.market === 'JP' ? '日本' : '米国'}</span>

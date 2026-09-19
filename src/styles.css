@@ -175,9 +175,35 @@ button:disabled {
   border-radius: 12px;
   padding: 14px;
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   gap: 12px;
   align-items: center;
+}
+
+.watch-card-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reorder-button {
+  background: transparent;
+  color: #8b98a5;
+  border: 1px solid #2b3947;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.reorder-button:hover:not(:disabled) {
+  color: #e6edf3;
+  border-color: #4a5a6a;
+}
+
+.reorder-button:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
 }
 
 .watch-card.shikomi {

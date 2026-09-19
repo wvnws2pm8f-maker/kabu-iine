@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { listWatchItems, addWatchItem, updateWatchItem, deleteWatchItem } from './utils/db.js'
+import { listWatchItems, addWatchItem, updateWatchItem, deleteWatchItem, reorderWatchItems } from './utils/db.js'
 import { fetchQuotes } from './utils/quote.js'
 import AddItemForm from './components/AddItemForm.jsx'
 import WatchlistTable from './components/WatchlistTable.jsx'
@@ -66,6 +66,24 @@ export default function App() {
     if (updated) {
       setItems((prev) => prev.map((i) => (i.id === id ? updated : i)))
     }
+  }
+
+  // 並び替え。現在のタブ(市場)内での前後入れ替えなので、他の市場の並びには触れない。
+  // DB更新後は改めてlistWatchItemsで読み直し、永続化された順番とstateを一致させる。
+  const handleMove = async (id, direction) => {
+    const currentMarket = items.find((i) => i.id === id)?.market
+    const sameMarketItems = items.filter((i) => i.market === currentMarket)
+    const idx = sameMarketItems.findIndex((i) => i.id === id)
+    const targetIdx = idx + direction
+    if (idx < 0 || targetIdx < 0 || targetIdx >= sameMarketItems.length) return
+
+    const reordered = [...sameMarketItems]
+    const [moved] = reordered.splice(idx, 1)
+    reordered.splice(targetIdx, 0, moved)
+
+    await reorderWatchItems(reordered.map((i) => i.id))
+    const stored = await listWatchItems()
+    setItems(stored)
   }
 
   const shikomiCount = items.filter((item) => {
@@ -142,6 +160,7 @@ export default function App() {
           quotes={quotes}
           onDelete={handleDelete}
           onUpdate={handleUpdateItem}
+          onMove={handleMove}
         />
       )}
     </div>
