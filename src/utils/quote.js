@@ -56,6 +56,27 @@ export async function fetchQuotes(items) {
   return result
 }
 
+// 証券コード/ティッカー入力時に銘柄名を自動取得するための単体検索。
+// 既存の/quoteエンドポイントをそのまま1銘柄だけ叩いて名前だけ拾う(専用エンドポイントは設けない)。
+// Worker未設定(モック環境)では自動入力の意味が無いのでnullを返すだけにする。
+export async function lookupSymbolName(market, code) {
+  const trimmed = String(code || '').trim()
+  if (!trimmed || !WORKER_URL) return null
+
+  const symbol = toYahooSymbol(market, trimmed)
+  const url = new URL('/quote', WORKER_URL)
+  url.searchParams.set('symbols', symbol)
+
+  const res = await fetch(url, {
+    headers: APP_SECRET ? { 'X-App-Secret': APP_SECRET } : {}
+  })
+  if (!res.ok) return null
+  const data = await res.json()
+  const quote = data.quotes?.[symbol]
+  if (!quote || quote.error || !quote.name) return null
+  return quote.name
+}
+
 function mockQuotes(items) {
   const result = {}
   for (const item of items) {
