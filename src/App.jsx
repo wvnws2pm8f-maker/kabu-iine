@@ -4,7 +4,8 @@ import { fetchQuotes } from './utils/quote.js'
 import AddItemForm from './components/AddItemForm.jsx'
 import WatchlistTable from './components/WatchlistTable.jsx'
 
-const MARKET_LABEL = { JP: '日本株', US: '米国株' }
+const MARKETS = ['JP', 'US', 'PRE']
+const MARKET_LABEL = { JP: '日本株', US: '米国株', PRE: '未上場' }
 
 export default function App() {
   const [items, setItems] = useState([])
@@ -59,12 +60,18 @@ export default function App() {
     })
   }
 
-  // 仕込み値・メモどちらの編集もこの1つの関数でまとめて扱う
-  // (WatchlistTable側はpatchオブジェクトを渡すだけでよい)
+  // 仕込み値・メモの編集、および未上場銘柄を「上場した」として証券コードを
+  // 入力し株価監視に切り替える操作も、この1つの関数でまとめて扱う
+  // (WatchlistTable側はpatchオブジェクトを渡すだけでよい)。
+  // market/codeが変わった=株価監視の対象が変わったときだけ自動で再取得する。
   const handleUpdateItem = async (id, patch) => {
     const updated = await updateWatchItem(id, patch)
     if (updated) {
-      setItems((prev) => prev.map((i) => (i.id === id ? updated : i)))
+      const nextItems = items.map((i) => (i.id === id ? updated : i))
+      setItems(nextItems)
+      if ('code' in patch || 'market' in patch) {
+        refreshQuotes(nextItems)
+      }
     }
   }
 
@@ -92,7 +99,7 @@ export default function App() {
   }).length
 
   const marketCounts = useMemo(() => {
-    const counts = { JP: 0, US: 0 }
+    const counts = { JP: 0, US: 0, PRE: 0 }
     for (const item of items) {
       if (counts[item.market] != null) counts[item.market] += 1
     }
@@ -100,7 +107,7 @@ export default function App() {
   }, [items])
 
   const marketHasShikomi = useMemo(() => {
-    const flags = { JP: false, US: false }
+    const flags = { JP: false, US: false, PRE: false }
     for (const item of items) {
       const q = quotes[item.id]
       const isShikomi = q && !q.error && Number(item.targetPrice) > 0 && q.price <= Number(item.targetPrice)
@@ -134,7 +141,7 @@ export default function App() {
       </div>
 
       <div className="market-tabs">
-        {['JP', 'US'].map((market) => (
+        {MARKETS.map((market) => (
           <button
             key={market}
             className={`market-tab ${activeMarket === market ? 'active' : ''}`}

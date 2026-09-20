@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import PriceChart from './PriceChart.jsx'
 
+const MARKET_SHORT_LABEL = { JP: '日本', US: '米国', PRE: '未上場' }
+
 function formatPrice(price, currency) {
   if (typeof price !== 'number') return '-'
   const symbol = currency === 'USD' ? '$' : currency === 'JPY' ? '¥' : ''
@@ -68,10 +70,66 @@ function MemoEditor({ item, onUpdate }) {
   )
 }
 
+function IpoTimingEditor({ item, onUpdate }) {
+  const [value, setValue] = useState(item.ipoTiming ?? '')
+
+  const commit = () => {
+    const trimmed = value.trim()
+    if (trimmed !== (item.ipoTiming ?? '')) {
+      onUpdate(item.id, { ipoTiming: trimmed })
+    }
+  }
+
+  return (
+    <input
+      className="ipo-timing-input"
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={commit}
+      placeholder="未定"
+    />
+  )
+}
+
+// 未上場銘柄が実際に上場したときに使う。証券コードを入力して送信すると
+// market/codeが更新され、以後は通常の株価監視・仕込みチャンス判定の対象になる。
+function PromoteForm({ item, onUpdate }) {
+  const [promoteMarket, setPromoteMarket] = useState('JP')
+  const [promoteCode, setPromoteCode] = useState('')
+
+  const handlePromote = (e) => {
+    e.preventDefault()
+    const trimmed = promoteCode.trim()
+    if (!trimmed) return
+    onUpdate(item.id, { market: promoteMarket, code: trimmed })
+  }
+
+  return (
+    <form className="promote-form" onSubmit={handlePromote}>
+      <span className="promote-form-label">上場したら証券コードを入力 → 株価監視に切り替え</span>
+      <div className="promote-form-row">
+        <select value={promoteMarket} onChange={(e) => setPromoteMarket(e.target.value)}>
+          <option value="JP">日本株</option>
+          <option value="US">米国株</option>
+        </select>
+        <input
+          type="text"
+          value={promoteCode}
+          onChange={(e) => setPromoteCode(e.target.value)}
+          placeholder={promoteMarket === 'JP' ? '例: 7203' : '例: AAPL'}
+        />
+        <button type="submit">切り替える</button>
+      </div>
+    </form>
+  )
+}
+
 export default function WatchlistTable({ items, quotes, onDelete, onUpdate, onMove }) {
   return (
     <div className="watchlist">
       {items.map((item, index) => {
+        const isPreIpo = item.market === 'PRE'
         const quote = quotes[item.id]
         const price = quote?.price
         const isShikomi =
@@ -100,9 +158,9 @@ export default function WatchlistTable({ items, quotes, onDelete, onUpdate, onMo
 
             <div className="watch-card-main">
               <div className="watch-card-title">
-                <span className={`market-badge ${item.market}`}>{item.market === 'JP' ? '日本' : '米国'}</span>
+                <span className={`market-badge ${item.market}`}>{MARKET_SHORT_LABEL[item.market]}</span>
                 <span className="watch-name">{item.name}</span>
-                <span className="watch-code">{item.code}</span>
+                {item.code && <span className="watch-code">{item.code}</span>}
                 {isShikomi && <span className="shikomi-tag">🎯 仕込みチャンス</span>}
               </div>
               <div className="watch-memo-row">
@@ -112,7 +170,12 @@ export default function WatchlistTable({ items, quotes, onDelete, onUpdate, onMo
             </div>
 
             <div className="watch-card-price">
-              {quote?.error ? (
+              {isPreIpo ? (
+                <div className="ipo-timing-field">
+                  <label className="ipo-timing-label">上場予定</label>
+                  <IpoTimingEditor item={item} onUpdate={onUpdate} />
+                </div>
+              ) : quote?.error ? (
                 <span className="quote-error">{quote.error}</span>
               ) : quote?.mock ? (
                 <>
@@ -130,8 +193,12 @@ export default function WatchlistTable({ items, quotes, onDelete, onUpdate, onMo
             </div>
 
             <div className="watch-card-target">
-              <label>仕込み値</label>
-              <TargetPriceEditor item={item} onUpdate={onUpdate} />
+              {!isPreIpo && (
+                <>
+                  <label>仕込み値</label>
+                  <TargetPriceEditor item={item} onUpdate={onUpdate} />
+                </>
+              )}
             </div>
 
             <button className="delete-button" onClick={() => onDelete(item.id)} aria-label="削除">
@@ -139,7 +206,9 @@ export default function WatchlistTable({ items, quotes, onDelete, onUpdate, onMo
             </button>
 
             <div className="watch-card-chart">
-              {quote?.history ? (
+              {isPreIpo ? (
+                <PromoteForm item={item} onUpdate={onUpdate} />
+              ) : quote?.history ? (
                 <PriceChart history={quote.history} currency={quote.currency} />
               ) : (
                 <div className="price-chart-empty">

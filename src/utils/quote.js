@@ -20,11 +20,13 @@ export function toYahooSymbol(market, code) {
 }
 
 // items: [{id, market, code}, ...] → { [id]: { price, previousClose, currency, name, error } }
+// 未上場(market: 'PRE'、証券コードが無い)は株価取得の対象外なのでここで除外する
 export async function fetchQuotes(items) {
-  if (items.length === 0) return {}
+  const quotableItems = items.filter((item) => item.market !== 'PRE' && item.code)
+  if (quotableItems.length === 0) return {}
 
   const symbolToIds = new Map()
-  for (const item of items) {
+  for (const item of quotableItems) {
     const symbol = toYahooSymbol(item.market, item.code)
     if (!symbolToIds.has(symbol)) symbolToIds.set(symbol, [])
     symbolToIds.get(symbol).push(item.id)
@@ -32,7 +34,7 @@ export async function fetchQuotes(items) {
   const symbols = [...symbolToIds.keys()]
 
   if (!WORKER_URL) {
-    return mockQuotes(items)
+    return mockQuotes(quotableItems)
   }
 
   const url = new URL('/quote', WORKER_URL)

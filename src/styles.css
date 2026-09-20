@@ -234,6 +234,11 @@ button:disabled {
   background: #2b3f47;
 }
 
+.market-badge.PRE {
+  background: #4a3f2b;
+  color: #e6cfa1;
+}
+
 .watch-name {
   font-weight: 600;
 }
@@ -316,6 +321,29 @@ button:disabled {
   font-size: 10px;
 }
 
+.ipo-timing-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.ipo-timing-label {
+  font-size: 10px;
+  color: #8b98a5;
+}
+
+.ipo-timing-input {
+  width: 130px;
+  background: #0f1720;
+  border: 1px solid #2b3947;
+  color: #e6edf3;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  text-align: right;
+}
+
 .watch-card-target {
   display: flex;
   flex-direction: column;
@@ -393,6 +421,43 @@ button:disabled {
   border-radius: 6px;
   white-space: nowrap;
   pointer-events: none;
+}
+
+.promote-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.promote-form-label {
+  font-size: 11px;
+  color: #d9a441;
+}
+
+.promote-form-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.promote-form-row select,
+.promote-form-row input {
+  background: #0f1720;
+  border: 1px solid #2b3947;
+  color: #e6edf3;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.promote-form-row input {
+  flex: 1;
+  min-width: 100px;
+}
+
+.promote-form-row button {
+  padding: 6px 12px;
+  font-size: 13px;
 }
 
 .price-chart-empty {
